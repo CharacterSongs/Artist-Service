@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "ArtsistService": {
+    "artistService": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
