@@ -1,6 +1,7 @@
 using ArtistService.Data;
 using ArtistService.Dtos;
 using ArtistService.Models;
+using ArtistService.SyncDataServices.Http;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,11 +13,16 @@ namespace ArtistService.Controllers
     {
         private IArtistRepo _repo;
         private IMapper _mapper;
+        private readonly IAlbumDataClient _albumDataClient;
 
-        public ArtistsController(IArtistRepo repo, IMapper mapper)
+        public ArtistsController(
+         IArtistRepo repo,
+         IMapper mapper,
+         IAlbumDataClient albumDataClient)
         {
             _repo = repo;
             _mapper = mapper;
+            _albumDataClient = albumDataClient;
         }
         [HttpGet]
         public ActionResult<IEnumerable<ArtistReadDto>> GetArtists()
@@ -40,7 +46,7 @@ namespace ArtistService.Controllers
         }
 
         [HttpPost]
-        public ActionResult<ArtistCreateDto> PostArtist(ArtistCreateDto artistCreateDto)
+        public async Task<ActionResult<ArtistCreateDto>> PostArtist(ArtistCreateDto artistCreateDto)
         {
             var artistModel = _mapper.Map<Artist>(artistCreateDto);
             _repo.CreateArtist(artistModel);
@@ -48,7 +54,16 @@ namespace ArtistService.Controllers
 
             var artistReadDto = _mapper.Map<ArtistReadDto>(artistModel);
 
-            return CreatedAtRoute(nameof(GetArtistById), new { Id = artistReadDto.Id}, artistReadDto );
+            try
+            {
+                await _albumDataClient.SendArtistToAlbum(artistReadDto);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"--> could not send synchronously");
+            }
+
+            return CreatedAtRoute(nameof(GetArtistById), new { Id = artistReadDto.Id }, artistReadDto);
         }
     }
 }
