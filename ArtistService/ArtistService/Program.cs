@@ -3,10 +3,19 @@ using ArtistService.SyncDataServices.Http;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddDbContext<AppDbContext>(opt =>
- opt.UseInMemoryDatabase("InMem"));
+//Add services to the container.
+if (builder.Environment.IsProduction())
+{
+    Console.WriteLine("--> Using SqlServer Db");
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseSqlServer(builder.Configuration.GetConnectionString("ArtistsConn")));
+}
+else
+{
+   Console.WriteLine("--> Using InMem Db");
+   builder.Services.AddDbContext<AppDbContext>(opt =>
+       opt.UseInMemoryDatabase("InMem"));
+}
 
 builder.Services.AddControllers();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -31,5 +40,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-PrepDb.PrepPopulation(app);
+PrepDb.PrepPopulation(app, builder.Environment.IsProduction());
 app.Run();
