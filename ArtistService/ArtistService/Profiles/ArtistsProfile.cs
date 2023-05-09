@@ -11,6 +11,7 @@ namespace ArtistService.Profiles
             // Source -> Target
             CreateMap<Artist, ArtistReadDto>();
             CreateMap<ArtistCreateDto, Artist>();
+            CreateMap<ArtistReadDto, ArtistPublishedDto>();
         }
     }
 }
