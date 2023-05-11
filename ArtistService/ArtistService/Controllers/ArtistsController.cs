@@ -1,3 +1,4 @@
+using ArtistService.AsyncDataServices;
 using ArtistService.Data;
 using ArtistService.Dtos;
 using ArtistService.Models;
@@ -14,15 +15,18 @@ namespace ArtistService.Controllers
         private IArtistRepo _repo;
         private IMapper _mapper;
         private readonly IAlbumDataClient _albumDataClient;
+        private readonly IMessageBusClient _messageBusClient;
 
         public ArtistsController(
          IArtistRepo repo,
          IMapper mapper,
-         IAlbumDataClient albumDataClient)
+         IAlbumDataClient albumDataClient,
+         IMessageBusClient messageBusClient)
         {
             _repo = repo;
             _mapper = mapper;
             _albumDataClient = albumDataClient;
+            _messageBusClient = messageBusClient;
         }
         [HttpGet]
         public ActionResult<IEnumerable<ArtistReadDto>> GetArtists()
@@ -53,16 +57,27 @@ namespace ArtistService.Controllers
             _repo.SaveChanges();
 
             var artistReadDto = _mapper.Map<ArtistReadDto>(artistModel);
-
+            //send sync message
             try
             {
                 await _albumDataClient.SendArtistToAlbum(artistReadDto);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine($"--> could not send synchronously");
+                Console.WriteLine($"--> could not send synchronously: {ex.Message}");
             }
 
+            //send async message
+            try
+            {
+                var artistPublishedDto = _mapper.Map<ArtistPublishedDto>(artistReadDto);
+                artistPublishedDto.Event = "Artist_Published";
+                _messageBusClient.PublishNewArtist(artistPublishedDto);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--> could not send asynchronously: {ex.Message}");
+            }
             return CreatedAtRoute(nameof(GetArtistById), new { Id = artistReadDto.Id }, artistReadDto);
         }
     }
