@@ -1,5 +1,6 @@
 using ArtistService.AsyncDataServices;
 using ArtistService.Data;
+using ArtistService.SyncDataServices.Grpc;
 using ArtistService.SyncDataServices.Http;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,9 +14,9 @@ if (builder.Environment.IsProduction())
 }
 else
 {
-   Console.WriteLine("--> Using InMem Db");
-   builder.Services.AddDbContext<AppDbContext>(opt =>
-       opt.UseInMemoryDatabase("InMem"));
+    Console.WriteLine("--> Using InMem Db");
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseInMemoryDatabase("InMem"));
 }
 
 builder.Services.AddControllers();
@@ -24,7 +25,7 @@ builder.Services.AddScoped<IArtistRepo, ArtistRepo>();
 
 builder.Services.AddHttpClient<IAlbumDataClient, HttpAlbumDataClient>();
 builder.Services.AddSingleton<IMessageBusClient, MessageBusClient>();
-
+builder.Services.AddGrpc();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -41,5 +42,10 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGrpcService<GrpcArtistService>();
+app.MapGet("/protos/artists.proto", async context =>
+{
+    await context.Response.WriteAsync(File.ReadAllText("Proto/artists.proto"));
+});
 PrepDb.PrepPopulation(app, builder.Environment.IsProduction());
 app.Run();
