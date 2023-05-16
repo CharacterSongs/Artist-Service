@@ -6,7 +6,8 @@ namespace ArtistService.Data
     {
         bool SaveChanges();
         IEnumerable<Artist> GetAllArtists();
-        Artist GetArtistById(int id);
+        Artist GetArtistById(Guid id);
         void CreateArtist(Artist artist);
+        void DeleteArtist(Guid id);
     }
 }

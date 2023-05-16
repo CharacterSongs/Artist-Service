@@ -73,5 +73,20 @@ namespace ArtistService.AsyncDataServices
         {
             Console.WriteLine("--> RabbitMQ Connection Shutdown");
         }
+
+        public void DeleteArtist(ArtistDeletedDto artistDeletedDto)
+        {
+            var message = JsonSerializer.Serialize(artistDeletedDto);
+
+            if (_connection.IsOpen)
+            {
+                Console.WriteLine("--> RabbitMQ Connection is Open, sending message...");
+                SendMessage(message);
+            }
+            else
+            {
+                Console.WriteLine("--> RabbitMQ connection is closed, not sending");
+            }
+        }
     }
 }

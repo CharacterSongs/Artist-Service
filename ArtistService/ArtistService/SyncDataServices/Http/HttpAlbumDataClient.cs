@@ -33,5 +33,23 @@ namespace ArtistService.SyncDataServices.Http
                 Console.WriteLine("--> Sync POST to AlbumService was not Ok!");       
             }
         }
+
+        public async Task SendArtistToAlbumForDelete(Guid artistId)
+        {
+           var httpContent = new StringContent(
+                JsonSerializer.Serialize(artistId),
+                Encoding.UTF8,
+                "application/json");   
+
+            var response = await _httpClient.DeleteAsync($"{_configuration["AlbumService"]}{artistId}");
+            if(response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("--> Sync Delete to AlbumService was Ok!");
+            }
+            else
+            {
+                Console.WriteLine("--> Sync Delete to AlbumService was not Ok!");       
+            }
+        }
     }
 }

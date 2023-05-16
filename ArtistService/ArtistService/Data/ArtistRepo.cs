@@ -20,12 +20,18 @@ namespace ArtistService.Data
             _context.Artists.Add(artist);
         }
 
+        public void DeleteArtist(Guid id)
+        {
+            var art =_context.Artists.FirstOrDefault(a => a.Id == id);
+            _context.Artists.Remove(art);
+        }
+
         public IEnumerable<Artist> GetAllArtists()
         {
             return _context.Artists.ToList();
         }
 
-        public Artist GetArtistById(int id)
+        public Artist GetArtistById(Guid id)
         {
             return _context.Artists.FirstOrDefault(a => a.Id == id);
         }

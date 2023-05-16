@@ -39,7 +39,7 @@ namespace ArtistService.Controllers
         }
 
         [HttpGet("{id}", Name = "GetArtistById")]
-        public ActionResult<ArtistReadDto> GetArtistById(int id)
+        public ActionResult<ArtistReadDto> GetArtistById(Guid id)
         {
             var artistItem = _repo.GetArtistById(id);
             if (artistItem != null)
@@ -79,6 +79,30 @@ namespace ArtistService.Controllers
                 Console.WriteLine($"--> could not send asynchronously: {ex.Message}");
             }
             return CreatedAtRoute(nameof(GetArtistById), new { Id = artistReadDto.Id }, artistReadDto);
+        }
+        [HttpDelete("{artistId}", Name = "DeleteArtist")]
+        public async Task DeleteArtist(Guid artistId)
+        {
+            _repo.DeleteArtist(artistId);
+            _repo.SaveChanges();
+                //send sync message
+            try
+            {
+                await _albumDataClient.SendArtistToAlbumForDelete(artistId);
+            }
+            catch (Exception ex)
+            {   //send async message
+                try
+                {
+                    var artistDeletedDto = _mapper.Map<ArtistDeletedDto>(artistId);
+                    artistDeletedDto.Event = "Artist_Deleted";
+                    _messageBusClient.DeleteArtist(artistDeletedDto);
+                }
+                catch (Exception ex2)
+                {
+                    Console.WriteLine($"--> could not send asynchronously: {ex2.Message}");
+                }
+            }
         }
     }
 }
